@@ -1,4 +1,4 @@
-### Fully commented and reusable blender python scripts: Three examples of using the Enumerator Property in Blender 3.3  
+### Fully commented and reusable blender python scripts: Three examples of using the Enum Property
 
 Example 1: sync two enumerator properties with get/set callbacks  
 Example 2: control the number of custom-list-items to display  
