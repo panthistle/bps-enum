@@ -1,7 +1,7 @@
 ##############################################################################
 #                                                                            #
 #   Three examples of using the Enumerator Property in Blender 3.3           #
-#                      by Pan Thistle (C) 2023                               #
+#                          Pan Thistle, 2023                                 #
 #                                                                            #
 #   This program is free software: you can redistribute it and/or modify     #
 #   it under the terms of the GNU General Public License as published by     #
