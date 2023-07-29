@@ -19,7 +19,7 @@
 ##############################################################################
 
 
-#       Example 1: sync two enumerator properties with get/set callbacks
+# Example 1: coordinate two enum properties with mutually exclusive values
 
 
 import bpy
@@ -31,27 +31,24 @@ import bpy
 
 
 class DENUMSYNC_props(bpy.types.PropertyGroup):
-    def track_get(self):
-        # note: the default value for enum-property must be a numeric index
-        return self.get("track", 1)
-
-    def track_set(self, value):
-        # note: the 'value' parameter also holds a numeric index
-        u = self.get("up", 2)
-        if value in [u, u + 3]:
-            # adjust selected index so it does not clash with UP property
-            value = value + 1 if value < 5 else 0
-        self["track"] = value
-
-    def up_get(self):
-        return self.get("up", 2)
-
-    def up_set(self, value):
+    def up_items(self, context):
+        # this function will populate 'up' enum with valid entries
+        # that do not clash with currently selected 'track' value 
+        names = ["X", "Y", "Z"]
         t = self.get("track", 1)
-        if t in [value, value + 3]:
-            # adjust selected index so it does not clash with TRACK property
-            value = value + 1 if value < 2 else 0
-        self["up"] = value
+        idx = -1
+        items = []
+        for i in range(3):
+            idx += 1
+            if t in [i, i + 3]:
+                idx -= 1
+                continue
+            items.append((str(idx), names[i], names[i]))
+        return items
+
+    def track_update(self, context):
+        # note: you MUST select index here, otherwise it will be undefined
+        self.up = "0"
 
     track: bpy.props.EnumProperty(
         name="Track",
@@ -65,17 +62,13 @@ class DENUMSYNC_props(bpy.types.PropertyGroup):
             ("-Z", "-Z", "-Z"),
         ),
         default="Y",
-        get=track_get,
-        set=track_set,
+        update=track_update,
     )
 
     up: bpy.props.EnumProperty(
         name="Up",
         description="up axis",
-        items=(("X", "X", "X"), ("Y", "Y", "Y"), ("Z", "Z", "Z")),
-        default="Z",
-        get=up_get,
-        set=up_set,
+        items=up_items,
     )
 
 
