@@ -19,7 +19,7 @@
 ##############################################################################
 
 
-#       Example 2: control the number of custom-list-items to display
+# Example 2: control the number of custom-list-items to display
 
 
 import bpy
@@ -39,15 +39,13 @@ class DENUMCTRL_props(bpy.types.PropertyGroup):
         for i in range(self.ctrl):
             # note: following description assignment confuses display
             #       when hovering over drop-down-list items
-            #       items.append((str(i), names[i], 'Item ' + names[i], i))
-            items.append((str(i), names[i], names[i], i))
+#            items.append((str(i), names[i], 'Item ' + names[i]))
+            items.append((str(i), names[i], names[i]))
         return items
 
     def ctrl_update(self, context):
-        # note: 'ctrl' will update the enumerated list, but
-        # you MUST set the selected index here, otherwise it
-        # will be undefined if not found. In this case, we set
-        # it to the last item but you can pick any valid index
+        # note: you MUST select index here, otherwise it will be undefined
+        # In this case, we set it to the last item in the list
         items = self.get("ctrl", 3)
         self.optenum = str(items - 1)
 
@@ -57,9 +55,9 @@ class DENUMCTRL_props(bpy.types.PropertyGroup):
         description="selection list",
         items=optenum_items,
     )
-    # number of items for enumerated list
+    # controls the number of items for enumerated list
     ctrl: bpy.props.IntProperty(default=3, min=3, max=12, update=ctrl_update)
-    # attempt to select arbitrary index
+    # attempts to select arbitrary index
     setidx: bpy.props.IntProperty(name="New Index", default=5)
 
 
