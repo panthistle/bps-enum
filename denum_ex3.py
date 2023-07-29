@@ -19,7 +19,10 @@
 ##############################################################################
 
 
-#       Example 3: sync enumerator property with user list
+# Example 3: Sync enum property with user-list. The requirement is that for any
+#            selected item in the user-list, the "enum" should contain valid
+#            parent candidates. This means it will not show any of the selected
+#            item's descendants (children, grand-children, and so on).
 
 
 import bpy
@@ -35,7 +38,6 @@ class DENUMUL_sub(bpy.types.PropertyGroup):
     # user-list item properties
 
     name: bpy.props.StringProperty(default="sub")
-    active: bpy.props.BoolProperty(name="Active", default=False, options={"HIDDEN"})
     # item/parent unique ids
     uid: bpy.props.StringProperty(default="")
     pid: bpy.props.StringProperty(default="")
@@ -44,10 +46,12 @@ class DENUMUL_sub(bpy.types.PropertyGroup):
 class DENUMUL_props(bpy.types.PropertyGroup):
     def descendants(self, key, lst=[]):
         # for any item with uid==key, return a list of uids of dependent items
+        # - first, we get the item's children
         cuids = [sub.uid for sub in self.subs if sub.pid == key]
         for cuid in cuids:
+            # - then, for each child, we append its uid to the list
             lst.append(cuid)
-            # recursion !!!
+            # - and call the function recursively to traverse the tree of descendants
             lst = self.descendants(cuid, lst)
         return lst
 
@@ -68,22 +72,22 @@ class DENUMUL_props(bpy.types.PropertyGroup):
         return items
 
     def parent_enum_update(self, context):
-        # update ui-panel flag
-        self.p_link = self.get("parent_enum", -1)
+        # update parent_enum index
+        self.p_idx = self.get("parent_enum", -1)
 
     def subs_idx_update(self, context):
-        # reset ui-panel flag
-        self.p_link = -1
+        # update parent_enum index
+        self.p_idx = -1
         if bool(self.subs):
-            # this updates the 'parent_enum' list
+            # get the current 'parent_enum' items list
             items = self.parent_enum_items(context)
             if bool(items):
                 # this triggers 'parent_enum_update'
                 self.parent_enum = items[0][0]
 
-    # ui-panel flag
-    p_link: bpy.props.IntProperty(default=-1)
-    # enumerated list
+    # parent_enum index
+    p_idx: bpy.props.IntProperty(default=-1)
+    # parent_enum list
     parent_enum: bpy.props.EnumProperty(
         name="Parent Links",
         description="target parent",
@@ -116,7 +120,6 @@ class DENUMUL_OT_sub_add(bpy.types.Operator):
         try:
             item = props.subs.add()
             item.uid = self.sub_uid_get()
-            item.active = True
             props.subs_idx = len(props.subs) - 1
         except Exception as my_err:
             self.report({"INFO"}, f"{my_err.args}")
@@ -155,7 +158,7 @@ class DENUMUL_OT_sub_remove(bpy.types.Operator):
             if self.doall:
                 props.subs.clear()
                 props.subs_idx = -1
-                props.p_link = -1
+                props.p_idx = -1
                 return {"FINISHED"}
             idx = props.subs_idx
             obj = props.subs[idx]
@@ -167,7 +170,7 @@ class DENUMUL_OT_sub_remove(bpy.types.Operator):
             props.subs_idx = min(max(0, idx - 1), len(props.subs) - 1)
             # update ui-panel display flag if there are no items left
             if props.subs_idx < 0:
-                props.p_link = -1
+                props.p_idx = -1
         except Exception as my_err:
             self.report({"INFO"}, f"{my_err.args}")
             print(f"sub_remove: {my_err.args}")
@@ -215,8 +218,6 @@ class DENUMUL_UL_subs(bpy.types.UIList):
         self, context, layout, data, item, icon, active_data, active_propname, index
     ):
         self.use_filter_show = False
-        cust_icon = "RADIOBUT_ON" if item.active else "RADIOBUT_OFF"
-
         p_name = ""
         if item.pid:
             for obj in data.subs:
@@ -224,7 +225,7 @@ class DENUMUL_UL_subs(bpy.types.UIList):
                     p_name = obj.name
                     break
         col = layout.column()
-        col.prop(item, "name", text="", emboss=False, icon=cust_icon)
+        col.prop(item, "name", text="", emboss=False, icon="RADIOBUT_ON")
         col = layout.column()
         col.label(text=f"p: {p_name}")
 
@@ -246,7 +247,8 @@ class DENUMUL_PT_ui(bpy.types.Panel):
         c = layout.column(align=True)
         row = c.row(align=True)
         row.operator("denumul.sub_add")
-        row.operator("denumul.sub_remove", text="Remove All").doall = True
+        row.operator("denumul.sub_remove", text="Remove").doall = False
+        row.operator("denumul.sub_remove", text="Clear").doall = True
         row = c.row(align=True)
 
         subs = props.subs
@@ -262,35 +264,22 @@ class DENUMUL_PT_ui(bpy.types.Panel):
         row = col.row(align=True)
         if bool(subs):
             item = subs[subid]
-            row.prop(item, "active", toggle=True)
-            row.operator("denumul.sub_remove", text="Remove").doall = False
-
             box = col.box()
             box.label(text="Parent Links")
-            # parent links are available to active objects only
-            box.enabled = item.active and len(subs) > 1
+            box.enabled = len(subs) > 1
             col = box.column(align=True)
             row = col.row(align=True)
             rc = row.column(align=True)
-            # enable sub_parent [assign] operator if parent_enum is populated
-            # and the current selection is NOT the active parent of 'item'
-            pflag = False
-            if props.p_link > -1:
-                pflag = subs[props.p_link].uid != item.pid
-            rc.enabled = pflag
-            rc.operator("denumul.sub_parent", text="Link Parent").val = True
+            p_idx = props.p_idx
+            # enable the parent operator if parent_enum is populated
+            rc.enabled = (p_idx > -1)
+            # if the current selection is NOT the parent of 'item'
+            # call [assign-parent], otherwise call [remove-parent]
+            pflag = (subs[p_idx].uid != item.pid)
+            cap = "Assign Parent" if pflag else "Remove Parent"
+            rc.operator("denumul.sub_parent", text=cap).val = pflag
             rc = row.column(align=True)
             rc.prop(props, "parent_enum", text="")
-            row = col.row(align=True)
-            # enable sub_parent [release] operator if parent_enum is populated
-            # and the current selection IS the active parent of 'item'
-            pflag = False
-            if props.p_link > -1:
-                pflag = subs[props.p_link].uid == item.pid
-            row.enabled = pflag
-            row.operator("denumul.sub_parent", text="Free Parent").val = False
-            row = col.row(align=True)
-            row.label(text=f"selected: {item.name}")
         else:
             row.label(text="no items")
 
