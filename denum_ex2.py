@@ -39,15 +39,16 @@ class DENUMCTRL_props(bpy.types.PropertyGroup):
         for i in range(self.ctrl):
             # note: following description assignment confuses display
             #       when hovering over drop-down-list items
-#            items.append((str(i), names[i], 'Item ' + names[i]))
-            items.append((str(i), names[i], names[i]))
+#            items.append((names[i], names[i], 'Item ' + names[i]))
+            items.append((names[i], names[i], names[i]))
         return items
 
     def ctrl_update(self, context):
         # note: you MUST select index here, otherwise it will be undefined
         # In this case, we set it to the last item in the list
+        names = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
         items = self.get("ctrl", 3)
-        self.optenum = str(items - 1)
+        self.optenum = names[items - 1]
 
     # enumerated list
     optenum: bpy.props.EnumProperty(
@@ -57,33 +58,6 @@ class DENUMCTRL_props(bpy.types.PropertyGroup):
     )
     # controls the number of items for enumerated list
     ctrl: bpy.props.IntProperty(default=3, min=3, max=12, update=ctrl_update)
-    # attempts to select arbitrary index
-    setidx: bpy.props.IntProperty(name="New Index", default=5)
-
-
-# ------------------------------------------------------------------------------
-#
-# ------------------------------ OPERATOR --------------------------------------
-
-
-class DENUMCTRL_OT_test(bpy.types.Operator):
-    bl_label = "Set Index"
-    bl_idname = "denumctrl.test"
-    bl_description = "attempt to set arbitrary index"
-    bl_options = {"REGISTER", "UNDO"}
-
-    def execute(self, context):
-        props = context.scene.denum_opt
-        idx = props.setidx
-        items = props.ctrl
-        try:
-            if idx < 0 or idx > items - 1:
-                raise Exception
-            props.optenum = str(idx)
-        except Exception:
-            self.report({"INFO"}, "index error!")
-            return {"CANCELLED"}
-        return {"FINISHED"}
 
 
 # ------------------------------------------------------------------------------
@@ -110,9 +84,6 @@ class DENUMCTRL_PT_ui(bpy.types.Panel):
         row = box.row(align=True)
         row.label(text="Current Index")
         row.label(text=f'{props.get("optenum", 0)}')
-        row = box.row(align=True)
-        row.operator("denumctrl.test")
-        row.prop(props, "setidx", text="")
 
 
 # ------------------------------------------------------------------------------
@@ -121,7 +92,6 @@ class DENUMCTRL_PT_ui(bpy.types.Panel):
 
 classes = (
     DENUMCTRL_props,
-    DENUMCTRL_OT_test,
     DENUMCTRL_PT_ui,
 )
 
