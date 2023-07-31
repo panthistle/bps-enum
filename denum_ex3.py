@@ -48,23 +48,25 @@ class DENUMUL_props(bpy.types.PropertyGroup):
         # for any item with uid==key, return a list of uids of dependent items
         # - first, we get the item's children
         cuids = [sub.uid for sub in self.subs if sub.pid == key]
+        # - then, for each child...
         for cuid in cuids:
-            # - then, for each child, we append its uid to the list
+            # - we append its uid to the list
             lst.append(cuid)
             # - and call the function recursively to traverse the tree of descendants
             lst = self.descendants(cuid, lst)
         return lst
 
     def parent_enum_items(self, context):
-        # calls to this function will update the 'parent_enum' list
+        # this function returns the items that will populate the 'parent_enum' list
         items = []
         if not bool(self.subs):
             return items
+        # current user-list selected item
         idx = self.subs_idx
         key = self.subs[idx].uid
-        # populate 'parent_enum' list with valid parent candidates
-        # exclude current item and its descendants
+        # selected item's descendants
         duids = self.descendants(key, [])
+        # we want valid parent candidates, excluding current item and its descendants
         for i, item in enumerate(self.subs):
             if (i == idx) or (item.uid in duids):
                 continue
@@ -79,7 +81,7 @@ class DENUMUL_props(bpy.types.PropertyGroup):
         # update parent_enum index
         self.p_idx = -1
         if bool(self.subs):
-            # get the current 'parent_enum' items list
+            # get 'parent_enum' items list
             items = self.parent_enum_items(context)
             if bool(items):
                 # this triggers 'parent_enum_update'
@@ -119,22 +121,14 @@ class DENUMUL_OT_sub_add(bpy.types.Operator):
         props = scene.denumul_props
         try:
             item = props.subs.add()
-            item.uid = self.sub_uid_get()
+            x = uuid.uuid4()
+            item.uid = str(x)
             props.subs_idx = len(props.subs) - 1
         except Exception as my_err:
             self.report({"INFO"}, f"{my_err.args}")
             print(f"sub_add: {my_err.args}")
             return {"CANCELLED"}
         return {"FINISHED"}
-
-    def sub_uid_get(self):
-        # make a UUID based on the host ID and current time
-        # uuid.uuid1()
-        # make a random UUID
-        # uuid.uuid4()
-
-        x = uuid.uuid4()
-        return str(x)
 
 
 class DENUMUL_OT_sub_remove(bpy.types.Operator):
@@ -162,7 +156,7 @@ class DENUMUL_OT_sub_remove(bpy.types.Operator):
                 return {"FINISHED"}
             idx = props.subs_idx
             obj = props.subs[idx]
-            # update parent-reference of any children before removing
+            # update parent-reference of any children before removing item
             for item in props.subs:
                 if item.pid == obj.uid:
                     item.pid = obj.pid
@@ -184,7 +178,7 @@ class DENUMUL_OT_sub_parent(bpy.types.Operator):
     bl_description = "set item parent"
     bl_options = {"REGISTER", "INTERNAL", "UNDO"}
 
-    # parent flag: True=assign, False=release
+    # parent flag: True=assign, False=remove
     val: bpy.props.BoolProperty(default=False, options={"HIDDEN"})
 
     def execute(self, context):
