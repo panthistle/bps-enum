@@ -36,19 +36,12 @@ class DENUMSYNC_props(bpy.types.PropertyGroup):
         # that do not clash with currently selected 'track' value 
         names = ["X", "Y", "Z"]
         t = self.get("track", 1)
-        idx = -1
         items = []
         for i in range(3):
-            idx += 1
             if t in [i, i + 3]:
-                idx -= 1
                 continue
-            items.append((str(idx), names[i], names[i]))
+            items.append((names[i], names[i], names[i]))
         return items
-
-    def track_update(self, context):
-        # note: you MUST select index here, otherwise it will be undefined
-        self.up = "0"
 
     track: bpy.props.EnumProperty(
         name="Track",
@@ -62,7 +55,6 @@ class DENUMSYNC_props(bpy.types.PropertyGroup):
             ("-Z", "-Z", "-Z"),
         ),
         default="Y",
-        update=track_update,
     )
 
     up: bpy.props.EnumProperty(
