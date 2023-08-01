@@ -37,9 +37,6 @@ class DENUMCTRL_props(bpy.types.PropertyGroup):
         names = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
         items = []
         for i in range(self.ctrl):
-            # note: following description assignment confuses display
-            #       when hovering over drop-down-list items
-#            items.append((names[i], names[i], 'Item ' + names[i]))
             items.append((names[i], names[i], names[i]))
         return items
 
