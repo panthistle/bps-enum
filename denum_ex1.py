@@ -33,7 +33,7 @@ import bpy
 class DENUMSYNC_props(bpy.types.PropertyGroup):
     def up_items(self, context):
         # this function will populate 'up' enum with valid entries
-        # that do not clash with currently selected 'track' value 
+        # that do not clash with currently selected 'track' value
         names = ["X", "Y", "Z"]
         t = self.get("track", 1)
         items = []
