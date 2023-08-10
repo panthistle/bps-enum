@@ -266,10 +266,10 @@ class DENUMUL_PT_ui(bpy.types.Panel):
             rc = row.column(align=True)
             p_idx = props.p_idx
             # enable the parent operator if parent_enum is populated
-            rc.enabled = (p_idx > -1)
+            rc.enabled = p_idx > -1
             # if the current selection is NOT the parent of 'item'
             # call [assign-parent], otherwise call [remove-parent]
-            pflag = (subs[p_idx].uid != item.pid)
+            pflag = subs[p_idx].uid != item.pid
             cap = "Assign Parent" if pflag else "Remove Parent"
             rc.operator("denumul.sub_parent", text=cap).val = pflag
             rc = row.column(align=True)
