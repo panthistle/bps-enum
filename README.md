@@ -7,4 +7,6 @@ enum_ex3: sync enum property with user list
 enum_ex3b: sync enum property with user-list. Object Rotations Demo  
 enum_ex3b_setup: generate the objects required for "enum_ex3b"  
 
+https://www.youtube.com/watch?v=3yDVmhzu-ck&list=PLI6-DUeYXpnPay3ZTRnAbZdNwhrAn2p_R
+
 Pan Thistle, 2023
