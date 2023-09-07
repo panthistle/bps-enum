@@ -1,4 +1,4 @@
-### blender python scripts: Example uses of Enum Property
+### blender python script: Example uses of Enum Property
 
 enum_ex1: coordinate two enum properties with mutually exclusive values  
 enum_ex1b: coordinate two enum properties with mutually exclusive values (get/set)  
